@@ -1,277 +1,402 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset='utf-8'>
-    <meta name='viewport' content='width=device-width, initial-scale=1'>
-    <title>Camera Test</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Camera Capture Test</title>
     <style>
-        body {
+        * {
             margin: 0;
-            padding: 20px;
-            background: #f0f0f0;
-            font-family: Arial, sans-serif;
+            padding: 0;
+            box-sizing: border-box;
         }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000;
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
-        
-        h1 {
+
+        .header {
+            background: #1a1a1a;
+            padding: 15px;
             text-align: center;
-            color: #333;
-            margin-bottom: 30px;
+            border-bottom: 1px solid #333;
         }
-        
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
         .camera-container {
+            flex: 1;
             position: relative;
-            width: 100%;
-            height: 400px;
-            background: black;
-            border-radius: 8px;
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-bottom: 20px;
             overflow: hidden;
         }
-        
-        #video {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            border-radius: 8px;
+
+        .loading-screen {
+            text-align: center;
+            color: white;
         }
-        
+
+        .loading-emoji {
+            font-size: 48px;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        .loading-text {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .loading-subtext {
+            font-size: 12px;
+            color: #888;
+            max-width: 250px;
+            margin: 0 auto;
+            line-height: 1.4;
+        }
+
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        #capturedImage {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: none;
+        }
+
         #canvas {
             display: none;
         }
-        
-        .loading {
+
+        .camera-selector {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .camera-selector select {
+            background: rgba(0,0,0,0.8);
             color: white;
-            text-align: center;
+            border: 1px solid #555;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            min-width: 120px;
         }
-        
-        .loading h2 {
-            margin-bottom: 10px;
-            font-size: 18px;
-        }
-        
-        .emoji {
-            font-size: 48px;
-            margin-bottom: 20px;
-        }
-        
-        .error {
-            color: #ff6b6b;
-            text-align: center;
-            padding: 20px;
-        }
-        
+
         .controls {
+            background: #1a1a1a;
+            padding: 20px;
             display: flex;
             justify-content: center;
             gap: 10px;
             flex-wrap: wrap;
-            margin-bottom: 20px;
+            border-top: 1px solid #333;
         }
-        
+
         .btn {
-            padding: 12px 24px;
+            padding: 12px 20px;
             border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
+            border-radius: 8px;
             font-size: 14px;
-            transition: all 0.3s ease;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
-        
+
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
-        
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-capture {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-retake {
+            background: #FF9800;
+            color: white;
+        }
+
+        .btn-download {
+            background: #2196F3;
+            color: white;
+        }
+
+        .btn-cancel {
+            background: #F44336;
+            color: white;
+        }
+
         .btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
             transform: none;
-            box-shadow: none;
         }
-        
-        .btn-primary { background: #4CAF50; color: white; }
-        .btn-secondary { background: #FF9800; color: white; }
-        .btn-success { background: #2196F3; color: white; }
-        .btn-danger { background: #F44336; color: white; }
-        
-        .camera-selector {
+
+        .error-screen {
             text-align: center;
+            padding: 40px 20px;
+            color: #ff6b6b;
+        }
+
+        .error-emoji {
+            font-size: 48px;
             margin-bottom: 20px;
         }
-        
-        .camera-selector select {
-            padding: 8px 12px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
+
+        .error-title {
+            font-size: 18px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .error-message {
             font-size: 14px;
-            background: white;
-            min-width: 200px;
+            line-height: 1.5;
+            max-width: 300px;
+            margin: 0 auto;
         }
-        
-        .info {
-            background: #e3f2fd;
-            border: 1px solid #2196F3;
-            border-radius: 5px;
+
+        .info-panel {
+            background: #2a2a2a;
+            margin: 10px;
             padding: 15px;
-            margin-top: 20px;
-        }
-        
-        .info h3 {
-            margin-top: 0;
-            color: #1976d2;
-        }
-        
-        #captured-image {
-            max-width: 100%;
             border-radius: 8px;
-            margin-top: 20px;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .info-panel h3 {
+            margin-bottom: 8px;
+            color: #4CAF50;
+            font-size: 14px;
+        }
+
+        .status-indicator {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
             display: none;
         }
-        
-        .debug-info {
-            background: #f5f5f5;
-            border-radius: 5px;
-            padding: 15px;
-            margin-top: 20px;
-            font-family: monospace;
-            font-size: 12px;
-            max-height: 200px;
-            overflow-y: auto;
+
+        .status-indicator.active {
+            display: block;
+        }
+
+        .status-indicator.recording {
+            background: #f44336;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.5; }
+        }
+
+        @media (max-width: 480px) {
+            .controls {
+                padding: 15px;
+                gap: 8px;
+            }
+            
+            .btn {
+                padding: 10px 15px;
+                font-size: 12px;
+                min-width: 80px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class='container'>
-        <h1>📷 Camera Test Tool</h1>
-        
-        <div class='camera-selector'>
-            <label for='cameraSelect'>Select Camera:</label>
-            <select id='cameraSelect' disabled>
-                <option value=''>Loading cameras...</option>
+    <div class="header">
+        <h1>📱 Mobile Camera Test</h1>
+    </div>
+
+    <div class="camera-container">
+        <div id="loadingScreen" class="loading-screen">
+            <div class="loading-emoji">📷</div>
+            <div class="loading-text">Initializing Camera...</div>
+            <div class="loading-subtext">Please allow camera access when prompted. This works with both webcam and mobile camera.</div>
+        </div>
+
+        <div id="errorScreen" class="error-screen" style="display: none;">
+            <div class="error-emoji">❌</div>
+            <div class="error-title">Camera Error</div>
+            <div id="errorMessage" class="error-message"></div>
+        </div>
+
+        <div class="status-indicator" id="statusIndicator">
+            🔴 Camera Active
+        </div>
+
+        <div class="camera-selector" id="cameraSelector">
+            <select id="cameraSelect">
+                <option value="">Select Camera...</option>
             </select>
         </div>
-        
-        <div class='camera-container'>
-            <div id='loading' class='loading'>
-                <div class='emoji'>📷</div>
-                <h2>Initializing Camera...</h2>
-                <p>Please allow camera access when prompted</p>
-            </div>
-            
-            <video id='video' autoplay playsinline muted></video>
-            <canvas id='canvas'></canvas>
-        </div>
-        
-        <div class='controls'>
-            <button id='startBtn' class='btn btn-primary'>🎥 Start Camera</button>
-            <button id='captureBtn' class='btn btn-secondary' disabled>📸 Capture Photo</button>
-            <button id='downloadBtn' class='btn btn-success' disabled>💾 Download</button>
-            <button id='stopBtn' class='btn btn-danger' disabled>⏹️ Stop Camera</button>
-        </div>
-        
-        <img id='captured-image' alt='Captured photo'>
-        
-        <div class='info'>
-            <h3>🔍 Browser Compatibility Check</h3>
-            <div id='compatibility-info'></div>
-        </div>
-        
-        <div class='debug-info'>
-            <strong>Debug Information:</strong>
-            <div id='debug-log'></div>
-        </div>
+
+        <video id="video" autoplay playsinline muted></video>
+        <img id="capturedImage" alt="Captured photo">
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <div class="info-panel">
+        <h3>📋 Test Information</h3>
+        <div id="cameraInfo">Detecting cameras...</div>
+        <div id="browserInfo"></div>
+    </div>
+
+    <div class="controls">
+        <button id="captureBtn" class="btn btn-capture" style="display: none;">
+            📸 Capture
+        </button>
+        <button id="retakeBtn" class="btn btn-retake" style="display: none;">
+            🔄 Retake
+        </button>
+        <button id="downloadBtn" class="btn btn-download" style="display: none;">
+            💾 Download
+        </button>
+        <button id="testAgainBtn" class="btn btn-cancel" onclick="location.reload()">
+            🔄 Test Again
+        </button>
     </div>
 
     <script>
-        let stream = null;
-        let video = document.getElementById('video');
-        let canvas = document.getElementById('canvas');
-        let ctx = canvas.getContext('2d');
-        let loading = document.getElementById('loading');
-        let cameraSelect = document.getElementById('cameraSelect');
-        let capturedImage = document.getElementById('captured-image');
-        let debugLog = document.getElementById('debug-log');
-        
-        // Buttons
-        let startBtn = document.getElementById('startBtn');
-        let captureBtn = document.getElementById('captureBtn');
-        let downloadBtn = document.getElementById('downloadBtn');
-        let stopBtn = document.getElementById('stopBtn');
-        
-        let availableCameras = [];
-        let currentImageData = null;
-
-        function log(message) {
-            console.log(message);
-            const timestamp = new Date().toLocaleTimeString();
-            debugLog.innerHTML += `<div>[${timestamp}] ${message}</div>`;
-            debugLog.scrollTop = debugLog.scrollHeight;
-        }
-
-        function checkCompatibility() {
-            const compatibilityDiv = document.getElementById('compatibility-info');
-            let html = '<ul>';
-            
-            // Check if running on HTTPS or localhost
-            const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-            html += `<li>🔒 Secure Context: ${isSecure ? '✅ Yes' : '❌ No (Camera requires HTTPS)'}</li>`;
-            
-            // Check MediaDevices API
-            const hasMediaDevices = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-            html += `<li>📱 MediaDevices API: ${hasMediaDevices ? '✅ Supported' : '❌ Not supported'}</li>`;
-            
-            // Check WebRTC
-            const hasWebRTC = !!(window.RTCPeerConnection || window.webkitRTCPeerConnection || window.mozRTCPeerConnection);
-            html += `<li>🌐 WebRTC: ${hasWebRTC ? '✅ Supported' : '❌ Not supported'}</li>`;
-            
-            // Browser info
-            html += `<li>🌍 User Agent: ${navigator.userAgent}</li>`;
-            
-            html += '</ul>';
-            compatibilityDiv.innerHTML = html;
-            
-            log(`Compatibility check completed. Secure: ${isSecure}, MediaDevices: ${hasMediaDevices}`);
-        }
-
-        async function getAvailableCameras() {
-            try {
-                log('Enumerating available cameras...');
+        class MobileCameraTest {
+            constructor() {
+                this.stream = null;
+                this.video = document.getElementById('video');
+                this.canvas = document.getElementById('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.capturedImage = document.getElementById('capturedImage');
+                this.availableCameras = [];
+                this.currentCameraIndex = 0;
                 
-                if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
-                    throw new Error('enumerateDevices not supported');
+                this.initializeElements();
+                this.detectBrowser();
+                this.initializeCamera();
+            }
+
+            initializeElements() {
+                this.loadingScreen = document.getElementById('loadingScreen');
+                this.errorScreen = document.getElementById('errorScreen');
+                this.statusIndicator = document.getElementById('statusIndicator');
+                this.cameraSelector = document.getElementById('cameraSelector');
+                this.cameraSelect = document.getElementById('cameraSelect');
+                this.captureBtn = document.getElementById('captureBtn');
+                this.retakeBtn = document.getElementById('retakeBtn');
+                this.downloadBtn = document.getElementById('downloadBtn');
+                this.cameraInfo = document.getElementById('cameraInfo');
+                this.errorMessage = document.getElementById('errorMessage');
+
+                // Event listeners
+                this.captureBtn.addEventListener('click', () => this.captureImage());
+                this.retakeBtn.addEventListener('click', () => this.retakePhoto());
+                this.downloadBtn.addEventListener('click', () => this.downloadImage());
+                this.cameraSelect.addEventListener('change', (e) => this.switchCamera(e.target.value));
+            }
+
+            detectBrowser() {
+                const browserInfo = document.getElementById('browserInfo');
+                const isWebView = /wv/.test(navigator.userAgent);
+                const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                const isAndroid = /Android/.test(navigator.userAgent);
+                
+                let info = `🌐 Browser: ${navigator.userAgent.split(' ')[0]} | `;
+                info += `📱 Mobile: ${isMobile ? 'Yes' : 'No'} | `;
+                info += `🔧 WebView: ${isWebView ? 'Yes' : 'No'}`;
+                
+                if (isIOS) info += ' | 🍎 iOS';
+                if (isAndroid) info += ' | 🤖 Android';
+                
+                browserInfo.textContent = info;
+            }
+
+            async initializeCamera() {
+                try {
+                    // Check if camera is supported
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        throw new Error('Camera not supported in this browser');
+                    }
+
+                    // Get available cameras
+                    await this.getAvailableCameras();
+                    
+                    // Start with back camera (environment) for mobile
+                    await this.startCamera();
+                    
+                    // Show camera selector if multiple cameras
+                    if (this.availableCameras.length > 1) {
+                        this.populateCameraSelector();
+                        this.cameraSelector.style.display = 'block';
+                    }
+                    
+                } catch (error) {
+                    console.error('Camera initialization failed:', error);
+                    this.showError('Failed to access camera', error.message);
                 }
-                
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                availableCameras = devices.filter(device => device.kind === 'videoinput');
-                
-                log(`Found ${availableCameras.length} camera(s)`);
-                
-                // Populate camera selector
-                cameraSelect.innerHTML = '';
-                
-                if (availableCameras.length === 0) {
-                    cameraSelect.innerHTML = '<option value="">No cameras found</option>';
-                    cameraSelect.disabled = true;
-                    return;
+            }
+
+            async getAvailableCameras() {
+                try {
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    this.availableCameras = devices.filter(device => device.kind === 'videoinput');
+                    
+                    let cameraText = `📹 Found ${this.availableCameras.length} camera(s): `;
+                    this.availableCameras.forEach((camera, index) => {
+                        const label = camera.label || `Camera ${index + 1}`;
+                        cameraText += `${index > 0 ? ', ' : ''}${label}`;
+                    });
+                    
+                    this.cameraInfo.textContent = cameraText;
+                } catch (error) {
+                    console.error('Failed to enumerate cameras:', error);
+                    this.cameraInfo.textContent = '❌ Could not detect cameras';
                 }
+            }
+
+            populateCameraSelector() {
+                this.cameraSelect.innerHTML = '<option value="">Select Camera...</option>';
                 
-                // Add default option
-                cameraSelect.innerHTML = '<option value="">Select Camera...</option>';
-                
-                availableCameras.forEach((camera, index) => {
+                this.availableCameras.forEach((camera, index) => {
                     const option = document.createElement('option');
                     option.value = camera.deviceId;
                     option.textContent = camera.label || `Camera ${index + 1}`;
@@ -284,232 +409,183 @@
                         option.textContent += ' (Back)';
                     }
                     
-                    cameraSelect.appendChild(option);
-                    log(`Camera found: ${option.textContent}`);
+                    this.cameraSelect.appendChild(option);
                 });
-                
-                cameraSelect.disabled = false;
-                
-            } catch (error) {
-                log(`Error enumerating cameras: ${error.message}`);
-                cameraSelect.innerHTML = '<option value="">Error loading cameras</option>';
-                cameraSelect.disabled = true;
             }
-        }
 
-        async function startCamera(deviceId = null) {
-            try {
-                log('Starting camera...');
-                
-                // Stop existing stream
-                if (stream) {
-                    stream.getTracks().forEach(track => {
-                        track.stop();
-                        log(`Stopped track: ${track.kind}`);
-                    });
-                }
-
-                // Show loading
-                loading.style.display = 'flex';
-                video.style.display = 'none';
-                
-                // Camera constraints
-                const constraints = {
-                    video: {
-                        width: { ideal: 1280, max: 1920 },
-                        height: { ideal: 720, max: 1080 }
-                    },
-                    audio: false
-                };
-
-                // Use specific device if provided, otherwise try environment camera first
-                if (deviceId) {
-                    constraints.video.deviceId = { exact: deviceId };
-                    log(`Using specific camera: ${deviceId}`);
-                } else {
-                    constraints.video.facingMode = { ideal: 'environment' };
-                    log('Trying environment (back) camera first');
-                }
-
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    throw new Error('getUserMedia not supported in this browser/context');
-                }
-
-                stream = await navigator.mediaDevices.getUserMedia(constraints);
-                video.srcObject = stream;
-                
-                video.onloadedmetadata = () => {
-                    log(`Camera started successfully. Resolution: ${video.videoWidth}x${video.videoHeight}`);
-                    loading.style.display = 'none';
-                    video.style.display = 'block';
-                    
-                    // Set canvas dimensions to match video
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    
-                    // Update button states
-                    startBtn.disabled = true;
-                    captureBtn.disabled = false;
-                    stopBtn.disabled = false;
-                };
-
-                video.onerror = (e) => {
-                    log(`Video error: ${e.message || 'Unknown video error'}`);
-                };
-
-            } catch (error) {
-                log(`Camera start failed: ${error.message}`);
-                
-                // If back camera fails and no specific device requested, try front camera
-                if (!deviceId && error.name === 'OverconstrainedError') {
-                    try {
-                        log('Retrying with front camera...');
-                        const fallbackConstraints = {
-                            video: {
-                                width: { ideal: 1280, max: 1920 },
-                                height: { ideal: 720, max: 1080 },
-                                facingMode: { ideal: 'user' }
-                            },
-                            audio: false
-                        };
-                        
-                        stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
-                        video.srcObject = stream;
-                        
-                        video.onloadedmetadata = () => {
-                            log(`Front camera started successfully. Resolution: ${video.videoWidth}x${video.videoHeight}`);
-                            loading.style.display = 'none';
-                            video.style.display = 'block';
-                            canvas.width = video.videoWidth;
-                            canvas.height = video.videoHeight;
-                            startBtn.disabled = true;
-                            captureBtn.disabled = false;
-                            stopBtn.disabled = false;
-                        };
-                        
-                    } catch (fallbackError) {
-                        showError(fallbackError.message);
+            async startCamera(deviceId = null) {
+                try {
+                    // Stop existing stream
+                    if (this.stream) {
+                        this.stream.getTracks().forEach(track => track.stop());
                     }
-                } else {
-                    showError(error.message);
+
+                    // Camera constraints - prefer back camera on mobile
+                    const constraints = {
+                        video: {
+                            width: { ideal: 1920, max: 1920 },
+                            height: { ideal: 1080, max: 1080 }
+                        }
+                    };
+
+                    if (deviceId) {
+                        constraints.video.deviceId = { exact: deviceId };
+                    } else {
+                        // Try back camera first on mobile
+                        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                        if (isMobile) {
+                            constraints.video.facingMode = { ideal: 'environment' };
+                        }
+                    }
+
+                    this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    this.video.srcObject = this.stream;
+                    
+                    this.video.onloadedmetadata = () => {
+                        this.hideLoading();
+                        this.showCamera();
+                        
+                        // Set canvas dimensions
+                        this.canvas.width = this.video.videoWidth;
+                        this.canvas.height = this.video.videoHeight;
+                        
+                        this.statusIndicator.classList.add('active');
+                        
+                        // Log camera info
+                        const track = this.stream.getVideoTracks()[0];
+                        const settings = track.getSettings();
+                        console.log('Camera settings:', settings);
+                        
+                        this.cameraInfo.innerHTML += `<br>📐 Resolution: ${settings.width}×${settings.height}`;
+                    };
+
+                } catch (error) {
+                    console.error('Failed to start camera:', error);
+                    
+                    // Try fallback to front camera if back camera fails
+                    if (!deviceId && error.name === 'OverconstrainedError') {
+                        try {
+                            const fallbackConstraints = {
+                                video: {
+                                    width: { ideal: 1920, max: 1920 },
+                                    height: { ideal: 1080, max: 1080 },
+                                    facingMode: { ideal: 'user' }
+                                }
+                            };
+                            
+                            this.stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+                            this.video.srcObject = this.stream;
+                            
+                            this.video.onloadedmetadata = () => {
+                                this.hideLoading();
+                                this.showCamera();
+                                this.canvas.width = this.video.videoWidth;
+                                this.canvas.height = this.video.videoHeight;
+                                this.statusIndicator.classList.add('active');
+                            };
+                        } catch (fallbackError) {
+                            throw fallbackError;
+                        }
+                    } else {
+                        throw error;
+                    }
                 }
             }
-        }
 
-        function showError(message) {
-            log(`Showing error: ${message}`);
-            loading.innerHTML = `
-                <div class='error'>
-                    <div class='emoji'>❌</div>
-                    <h2>Camera Error</h2>
-                    <p>${message}</p>
-                    <p><small>Check the debug log below for more details</small></p>
-                </div>
-            `;
-            
-            // Reset button states
-            startBtn.disabled = false;
-            captureBtn.disabled = true;
-            stopBtn.disabled = true;
-        }
-
-        function captureImage() {
-            if (!video.videoWidth || !video.videoHeight) {
-                log('Cannot capture: video not ready');
-                return;
+            switchCamera(deviceId) {
+                if (deviceId) {
+                    this.loadingScreen.style.display = 'block';
+                    this.video.style.display = 'none';
+                    this.captureBtn.style.display = 'none';
+                    this.statusIndicator.classList.remove('active');
+                    this.startCamera(deviceId);
+                }
             }
 
-            log('Capturing image...');
-            
-            // Draw current frame to canvas
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            ctx.drawImage(video, 0, 0);
-            
-            // Convert to base64
-            currentImageData = canvas.toDataURL('image/jpeg', 0.9);
-            
-            // Show captured image
-            capturedImage.src = currentImageData;
-            capturedImage.style.display = 'block';
-            
-            // Enable download button
-            downloadBtn.disabled = false;
-            
-            log(`Image captured successfully. Size: ${canvas.width}x${canvas.height}`);
-        }
-
-        function downloadImage() {
-            if (!currentImageData) {
-                log('No image to download');
-                return;
+            captureImage() {
+                if (this.video.videoWidth && this.video.videoHeight) {
+                    // Set canvas size to match video
+                    this.canvas.width = this.video.videoWidth;
+                    this.canvas.height = this.video.videoHeight;
+                    
+                    // Draw current frame
+                    this.ctx.drawImage(this.video, 0, 0);
+                    
+                    // Convert to data URL and show
+                    const dataURL = this.canvas.toDataURL('image/jpeg', 0.9);
+                    this.capturedImage.src = dataURL;
+                    
+                    // Update UI
+                    this.showCapturedImage();
+                    
+                    console.log('Image captured successfully');
+                    this.cameraInfo.innerHTML += '<br>✅ Image captured successfully!';
+                }
             }
-            
-            log('Downloading image...');
-            
-            const link = document.createElement('a');
-            link.download = `camera-capture-${new Date().getTime()}.jpg`;
-            link.href = currentImageData;
-            link.click();
-        }
 
-        function stopCamera() {
-            log('Stopping camera...');
-            
-            if (stream) {
-                stream.getTracks().forEach(track => {
-                    track.stop();
-                    log(`Stopped track: ${track.kind}`);
-                });
-                stream = null;
+            retakePhoto() {
+                this.showCamera();
             }
-            
-            video.srcObject = null;
-            video.style.display = 'none';
-            loading.style.display = 'flex';
-            loading.innerHTML = `
-                <div class='loading'>
-                    <div class='emoji'>📷</div>
-                    <h2>Camera Stopped</h2>
-                    <p>Click "Start Camera" to use again</p>
-                </div>
-            `;
-            
-            // Reset button states
-            startBtn.disabled = false;
-            captureBtn.disabled = true;
-            stopBtn.disabled = true;
+
+            downloadImage() {
+                const dataURL = this.canvas.toDataURL('image/jpeg', 0.9);
+                const link = document.createElement('a');
+                link.download = `camera-capture-${new Date().getTime()}.jpg`;
+                link.href = dataURL;
+                link.click();
+            }
+
+            showCamera() {
+                this.video.style.display = 'block';
+                this.capturedImage.style.display = 'none';
+                this.captureBtn.style.display = 'inline-flex';
+                this.retakeBtn.style.display = 'none';
+                this.downloadBtn.style.display = 'none';
+                this.statusIndicator.classList.add('active');
+            }
+
+            showCapturedImage() {
+                this.video.style.display = 'none';
+                this.capturedImage.style.display = 'block';
+                this.captureBtn.style.display = 'none';
+                this.retakeBtn.style.display = 'inline-flex';
+                this.downloadBtn.style.display = 'inline-flex';
+                this.statusIndicator.classList.remove('active');
+            }
+
+            hideLoading() {
+                this.loadingScreen.style.display = 'none';
+                this.errorScreen.style.display = 'none';
+            }
+
+            showError(title, message) {
+                this.loadingScreen.style.display = 'none';
+                this.errorScreen.style.display = 'block';
+                document.querySelector('.error-title').textContent = title;
+                this.errorMessage.textContent = message;
+                this.cameraInfo.innerHTML += `<br>❌ Error: ${message}`;
+            }
         }
 
-        // Event listeners
-        startBtn.addEventListener('click', () => {
-            const selectedDevice = cameraSelect.value;
-            startCamera(selectedDevice || null);
+        // Initialize when page loads
+        window.addEventListener('load', () => {
+            new MobileCameraTest();
         });
 
-        captureBtn.addEventListener('click', captureImage);
-        downloadBtn.addEventListener('click', downloadImage);
-        stopBtn.addEventListener('click', stopCamera);
-
-        cameraSelect.addEventListener('change', (e) => {
-            if (e.target.value && stream) {
-                log(`Switching to camera: ${e.target.value}`);
-                startCamera(e.target.value);
-            }
-        });
-
-        // Initialize on page load
-        window.addEventListener('load', async () => {
-            log('Page loaded, initializing...');
-            checkCompatibility();
-            await getAvailableCameras();
-            log('Initialization complete');
-        });
-
-        // Handle page unload
-        window.addEventListener('beforeunload', () => {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
+        // Handle page visibility changes (mobile optimization)
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                // Pause video when page is hidden (battery optimization)
+                const video = document.getElementById('video');
+                if (video && video.srcObject) {
+                    video.pause();
+                }
+            } else {
+                // Resume video when page is visible
+                const video = document.getElementById('video');
+                if (video && video.srcObject) {
+                    video.play();
+                }
             }
         });
     </script>
